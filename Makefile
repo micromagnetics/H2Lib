@@ -99,7 +99,8 @@ SOURCES_stable := \
 	Tests/test_h2compression.c \
 	Tests/test_tet3d.c \
 	Tests/test_tri2d.c \
-	Tests/test_ddcluster.c
+	Tests/test_ddcluster.c \
+	Tests/test_lindholm.c
 
 SOURCES_tests = $(SOURCES_stable) \
 
