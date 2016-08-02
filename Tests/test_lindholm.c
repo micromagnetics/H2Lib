@@ -338,7 +338,7 @@ int main(int argc, char **argv) {
   uint q_reg, q_sing;
   pbem3d bem;
   uint clf;
-  pamatrix K;
+  //pamatrix K;
   pcluster root;
   real eta;
   pblock broot;
@@ -374,13 +374,15 @@ int main(int argc, char **argv) {
 //  K = new_zero_amatrix(vertices, vertices);
 
 //  printf("Fill dense matrix K:\n");
+  printf("Dense matrix K:\n");
 //  start_stopwatch(sw);
 ////  assemble_doublelayer_lindholm_C(vertices, gr->x, gr->triangles,
 ////      (int (*)[3]) gr->t, K->a);
 //  bem->nearfield(NULL, NULL, bem, false, K);
 //  printf("  %.2f s\n", stop_stopwatch(sw));
 //  printf("  %.3f MB\n", getsize_amatrix(K) / 1024.0 / 1024.0);
-//  printf("================================\n");
+  printf("  %.3lf MB\n", (double)(vertices)*vertices * 8. / 1024.0 / 1024.0);
+  printf("================================\n");
 
   printf("Setup and fill H-matrix K:\n");
   start_stopwatch(sw);

@@ -728,7 +728,8 @@ del_tri_list(ptri_list tl)
 {
   ptri_list tl1;
 
-  assert(tl != NULL);
+  //assert(tl != NULL);
+  if (tl == NULL) return;
 
   tl1 = tl;
   while (tl1) {
