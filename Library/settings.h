@@ -26,7 +26,7 @@
 
 /** @brief Prefix for inline functions. */
 #ifdef __cplusplus
-#define INLINE_PREFIX static extern "C"
+#define INLINE_PREFIX static // static extern "C"
 #else
 #define INLINE_PREFIX static
 #endif
@@ -50,13 +50,13 @@
  * ------------------------------------------------------------ */
 
 /** @brief Boolean type. */
-typedef unsigned short bool;
+//typedef unsigned short bool;
 
 /** @brief Boolean constant <tt>true</tt>. */
-extern const bool true;
+//extern const bool true;
 
 /** @brief Boolean constant <tt>false</tt>. */
-extern const bool false;
+//extern const bool false;
 
 /** @brief Unsigned integer type.
  *
