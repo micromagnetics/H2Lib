@@ -45,7 +45,7 @@ typedef truncblock *ptruncblock;
  *  @param tm Truncation mode.
  *  @param eps Truncation accuracy.
  *  @returns @f$\mathcal{H}^2@f$-matrix approximation of @f$G@f$. */
-ph2matrix
+HEADER_PREFIX ph2matrix
 compress_amatrix_h2matrix(pcamatrix G, pcblock b, pctruncmode tm, real eps);
 
 /** @brief Approximate a hierarchical matrix, represented by an
@@ -55,7 +55,7 @@ compress_amatrix_h2matrix(pcamatrix G, pcblock b, pctruncmode tm, real eps);
  *  @param tm Truncation mode.
  *  @param eps Truncation accuracy.
  *  @returns @f$\mathcal{H}^2@f$-matrix approximation of @f$G@f$. */
-ph2matrix
+HEADER_PREFIX ph2matrix
 compress_hmatrix_h2matrix(pchmatrix G, pctruncmode tm, real eps);
 
 /** @brief Approximate an @f$\mathcal{H}^2@f$-matrix, represented by an
@@ -69,7 +69,7 @@ compress_hmatrix_h2matrix(pchmatrix G, pctruncmode tm, real eps);
  *  @param tm Truncation mode.
  *  @param eps Truncation accuracy.
  *  @returns @f$\mathcal{H}^2@f$-matrix approximation of @f$G@f$. */
-ph2matrix
+HEADER_PREFIX ph2matrix
 compress_h2matrix_h2matrix(pch2matrix G, bool rbortho, bool cbortho,
     pctruncmode tm, real eps);
 
