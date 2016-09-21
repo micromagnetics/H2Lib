@@ -2,6 +2,7 @@
 // Last modified by Florian Bruckner, 2016-06-17
 
 #include <math.h>
+#include <sstream>
 #ifdef USE_OPENMP
 #include <omp.h>
 #endif
@@ -184,24 +185,6 @@ static void doublelayer_lindholm_C(double x[3], double x1[3], double x2[3],
 
 }
 
-static void assemble_doublelayer_lindholm_C(int NB, double nodes[][3], int NEB,
-    int triangles[][3], double M[]) {
-  int nb, neb, i;
-  double res[3];
-
-  for (neb = 0; neb < NEB; neb++) {
-    for (nb = 0; nb < NB; nb++) {
-      doublelayer_lindholm_C(nodes[nb], nodes[triangles[neb][0]],
-          nodes[triangles[neb][1]], nodes[triangles[neb][2]], res);
-      for (i = 0; i < 3; i++) {
-        M[nb * NB + triangles[neb][i]] += res[i];
-      }
-    }
-  }
-
-  return;
-}
-
 /* H2Lib interface */
 static void fill_dlp_l_collocation_near_laplacebem3d(const uint * ridx,
     const uint * cidx, pcbem3d bem, bool ntrans, pamatrix N) {
@@ -335,36 +318,22 @@ static pbem3d new_dlp_collocation_laplace_bem3d(pcsurface3d gr, uint q_regular,
   return bem;
 }
 
-Lindholm_C::Lindholm_C()
+int Lindholm_C::geometry_from_file(std::string infile)
 {
-  sw = new_stopwatch();
-  q_reg = 2;
-  q_sing = 1;
-  clf = 32;
-  eta = 2.0;
-  eps_aca = 1.0e-4;
-  tm = new_releucl_truncmode();
-  eps_recomp = 1.0e-4;
-
 //   gr = build_interactive_surface3d();
-  gr = read_gmsh_surface3d("model.msh");
+  gr = read_gmsh_surface3d(infile.c_str());
   printf("Geometry has %d vertices, %d edges, %d triangles\n", gr->vertices,
       gr->edges, gr->triangles);
   printf("================================\n");
   vertices = gr->vertices;
+  return(0);
+}
 
-  bem = new_dlp_collocation_laplace_bem3d(gr, q_reg, q_sing, BASIS_LINEAR_BEM3D,
-      BASIS_LINEAR_BEM3D);
-//  K = new_zero_amatrix(vertices, vertices);
+int Lindholm_C::setup()
+{
+  bem = new_dlp_collocation_laplace_bem3d(gr, q_reg, q_sing, BASIS_LINEAR_BEM3D, BASIS_LINEAR_BEM3D);
 
-//  printf("Fill dense matrix K:\n");
   printf("Dense matrix K:\n");
-//  start_stopwatch(sw);
-////  assemble_doublelayer_lindholm_C(vertices, gr->x, gr->triangles,
-////      (int (*)[3]) gr->t, K->a);
-//  bem->nearfield(NULL, NULL, bem, false, K);
-//  printf("  %.2f s\n", stop_stopwatch(sw));
-//  printf("  %.3f MB\n", getsize_amatrix(K) / 1024.0 / 1024.0);
   printf("  %.3lf MB\n", (double)(vertices)*vertices * 8. / 1024.0 / 1024.0);
   printf("================================\n");
 
@@ -380,26 +349,37 @@ Lindholm_C::Lindholm_C()
 //  setup_hmatrix_aprx_paca_bem3d(bem, root, root, broot, eps_aca);
   setup_hmatrix_aprx_aca_bem3d(bem, root, root, broot, eps_aca);
   setup_hmatrix_recomp_bem3d(bem, true, eps_recomp, true, eps_recomp);
-
   assemble_bem3d_hmatrix(bem, broot, Kh);
 
   printf("  %.2f s\n", stop_stopwatch(sw));
   printf("  %.3f MB\n", getsize_hmatrix(Kh) / 1024.0 / 1024.0);
-
-//  printf("rel error: %.5e\n",
-//      norm2diff_amatrix_hmatrix(Kh, K) / norm2_amatrix(K));
   printf("================================\n");
 
   printf("Convert H-matrix Kh to H2-matrix kh2:\n");
   start_stopwatch(sw);
-
   Kh2 = compress_hmatrix_h2matrix(Kh, tm, eps_recomp);
-
   printf("  %.2f s\n", stop_stopwatch(sw));
   printf("  %.3f MB\n",
       (getsize_h2matrix(Kh2) + getsize_clusterbasis(Kh2->rb)
        + getsize_clusterbasis(Kh2->cb))
       / 1024.0 / 1024.0);
+}
+
+Lindholm_C::Lindholm_C(std::string infile)
+{
+  sw = new_stopwatch();
+  q_reg = 2;
+  q_sing = 1;
+  clf = 32;
+  eta = 2.0;
+  eps_aca = 1.0e-4;
+  tm = new_releucl_truncmode();
+  eps_recomp = 1.0e-4;
+
+  geometry_from_file(infile.c_str());
+  setup();
+
+  return;
 }
 
 
@@ -417,5 +397,5 @@ Lindholm_C::~Lindholm_C()
 
 int main( void )
 {
-  Lindholm_C h2lib;
+  Lindholm_C h2lib("model.msh");
 }

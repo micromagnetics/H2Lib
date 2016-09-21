@@ -2,10 +2,10 @@
 // Last modified by Florian Bruckner, 2016-06-17
 
 #include <math.h>
+#include <sstream>
 #ifdef USE_OPENMP
 #include <omp.h>
 #endif
-
 
 #include "basic.h"
 #include "avector.h"
@@ -13,18 +13,19 @@
 #include "laplacebem3d.h"
 #include "h2compression.h"
 
+
 class Lindholm_C {
-  public: 
-    Lindholm_C();
+  public:
+    Lindholm_C(std::string infile);
     ~Lindholm_C();
-    
+
   private:
+    // variable definitions
     psurface3d gr;
     uint vertices;
     uint q_reg, q_sing;
     pbem3d bem;
     uint clf;
-    //pamatrix K;
     pcluster root;
     real eta;
     pblock broot;
@@ -34,5 +35,10 @@ class Lindholm_C {
     ptruncmode tm;
     ph2matrix Kh2;
     pstopwatch sw;
+
+    // method definitions
+    int geometry_from_file(std::string infile);
+    int setup();
 };
+
 
