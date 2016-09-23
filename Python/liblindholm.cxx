@@ -329,6 +329,17 @@ int Lindholm_C::geometry_from_file(std::string infile)
   return(0);
 }
 
+int Lindholm_C::geometry_from_array(unsigned int N, double coordinates[][3], unsigned int NE, int elements[][3])
+{
+  gr = create_surface3d_fromarray(N, coordinates, NE, elements);
+
+  printf("Geometry has %d vertices, %d edges, %d triangles\n", gr->vertices,
+      gr->edges, gr->triangles);
+  printf("================================\n");
+  vertices = gr->vertices;
+  return(0);
+}
+
 int Lindholm_C::setup()
 {
   bem = new_dlp_collocation_laplace_bem3d(gr, q_reg, q_sing, BASIS_LINEAR_BEM3D, BASIS_LINEAR_BEM3D);
@@ -365,7 +376,7 @@ int Lindholm_C::setup()
       / 1024.0 / 1024.0);
 }
 
-Lindholm_C::Lindholm_C(std::string infile)
+Lindholm_C::Lindholm_C()
 {
   sw = new_stopwatch();
   q_reg = 2;
@@ -376,26 +387,29 @@ Lindholm_C::Lindholm_C(std::string infile)
   tm = new_releucl_truncmode();
   eps_recomp = 1.0e-4;
 
-  geometry_from_file(infile.c_str());
-  setup();
-
-  return;
+  root = NULL;
+  broot = NULL;
+  Kh = NULL;
+  Kh2 = NULL;
+  bem = NULL;
+  gr = NULL;
+  sw = NULL;
 }
-
 
 Lindholm_C::~Lindholm_C()
 {
-  del_cluster(root);
-  del_block(broot);
-  del_hmatrix(Kh);
-  del_h2matrix(Kh2);
-  del_bem3d(bem);
-  del_surface3d(gr);
-  del_stopwatch(sw);
+  if (root != NULL) del_cluster(root);
+  if (broot != NULL) del_block(broot);
+  if (Kh != NULL) del_hmatrix(Kh);
+  if (Kh2 != NULL) del_h2matrix(Kh2);
+  if (bem != NULL) del_bem3d(bem);
+  if (gr != NULL) del_surface3d(gr);
+  if (sw != NULL) del_stopwatch(sw);
 }
-
 
 int main( void )
 {
-  Lindholm_C h2lib("model.msh");
+  Lindholm_C h2lib;
+  h2lib.geometry_from_file("model.msh");
+  h2lib.setup();
 }

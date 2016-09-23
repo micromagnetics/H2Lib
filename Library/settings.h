@@ -49,14 +49,16 @@
  * Types
  * ------------------------------------------------------------ */
 
+#ifndef __cplusplus
 /** @brief Boolean type. */
-//typedef unsigned short bool;
+typedef unsigned short bool;
 
 /** @brief Boolean constant <tt>true</tt>. */
-//extern const bool true;
+extern const bool true;
 
 /** @brief Boolean constant <tt>false</tt>. */
-//extern const bool false;
+extern const bool false;
+#endif
 
 /** @brief Unsigned integer type.
  *

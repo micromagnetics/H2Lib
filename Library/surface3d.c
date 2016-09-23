@@ -1177,6 +1177,44 @@ psurface3d read_gmsh_surface3d(const char *filename) {
   return gr;
 }
 
+psurface3d create_surface3d_fromarray(unsigned int N, double coordinates[][3], unsigned int NE, int elements[][3]) {
+  uint vertices, edges, triangles;
+  uint i, j;
+  psurface3d gr;
+
+  vertices = N;
+  triangles = NE;
+  edges = 1.5 * triangles;
+  gr = new_surface3d(vertices, edges, triangles);
+
+  /****************************************************
+   * Read vertices
+   ****************************************************/
+  for (i=0; i<N; i++) {
+    for (j=0; j<3; j++) {
+      gr->x[i][j] = coordinates[i][j];
+    }
+  }
+
+  /****************************************************
+   * Read triangles
+   ****************************************************/
+  for (i=0; i<NE; i++) {
+    for (j=0; j<3; j++) {
+      gr->t[i][j] = elements[i][j];
+    }
+  }
+
+  /****************************************************
+   * Generate Edges and arrays gr->s
+   ****************************************************/
+  prepare_edges(vertices, gr->t, triangles, gr->e, edges);
+  prepare_arrays_s(gr->t, gr->e, triangles, edges, gr->s);
+  prepare_surface3d(gr);
+
+  return gr;
+}
+
 static void prepare_dynamic_edges(uint vertices, uint (*t)[3], uint triangles,
     uint (**e)[2], uint * edges) {
   struct edge_list *(*list);

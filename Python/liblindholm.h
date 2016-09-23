@@ -16,7 +16,10 @@
 
 class Lindholm_C {
   public:
-    Lindholm_C(std::string infile);
+    Lindholm_C();
+    int geometry_from_file(std::string infile);
+    int geometry_from_array(unsigned int N, double coordinates[][3], unsigned int NE, int elements[][3]);
+    int setup();
     ~Lindholm_C();
 
   private:
@@ -37,8 +40,6 @@ class Lindholm_C {
     pstopwatch sw;
 
     // method definitions
-    int geometry_from_file(std::string infile);
-    int setup();
 };
 
 
