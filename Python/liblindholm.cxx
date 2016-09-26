@@ -374,6 +374,19 @@ int Lindholm_C::setup()
       (getsize_h2matrix(Kh2) + getsize_clusterbasis(Kh2->rb)
        + getsize_clusterbasis(Kh2->cb))
       / 1024.0 / 1024.0);
+//  return(0);
+}
+
+int Lindholm_C::matvec(unsigned int N, double x[], double b[])
+{
+  printf("Matrix Vector Multiplication\n");
+  pavector x_vec, b_vec;
+  x_vec = new_pointer_avector((double *)x, N);
+  b_vec = new_pointer_avector((double *)b, N);
+  mvm_h2matrix_avector(1., false, Kh2, x_vec, b_vec);
+  del_avector(x_vec);
+  del_avector(b_vec);
+  return(0);
 }
 
 Lindholm_C::Lindholm_C()
@@ -412,4 +425,5 @@ int main( void )
   Lindholm_C h2lib;
   h2lib.geometry_from_file("model.msh");
   h2lib.setup();
+//  h2lib.mvm_h2matrix();
 }

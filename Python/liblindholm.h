@@ -20,6 +20,7 @@ class Lindholm_C {
     int geometry_from_file(std::string infile);
     int geometry_from_array(unsigned int N, double coordinates[][3], unsigned int NE, int elements[][3]);
     int setup();
+    int matvec(unsigned int N, double x[], double b[]);
     ~Lindholm_C();
 
   private:

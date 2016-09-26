@@ -11,7 +11,7 @@ cdef extern from "liblindholm.h":
     int geometry_from_file(string infile) except +
     int geometry_from_array(unsigned int N, double coordinates[][3], unsigned int NE, int cells[][3]) except +
     int setup() except +
-#    int calculate_potential(unsigned int N, const double mag[][3], double potential[]) except +
+    int matvec(unsigned int N, double x[], double b[]) except +
 #    int print_args()
 #    int writeINP(string &outfile) except +
 
@@ -36,18 +36,16 @@ cdef class Lindholm:
   def setup(self):
     return self.cobj.setup()
 
-#  def calculate_potential(self, np.ndarray[np.float64_t,ndim=2] mag):
-#    cdef int N = mag.shape[0]
-#    cdef np.ndarray[np.float64_t, ndim=1] potential = np.zeros(N)
-#    if not mag.flags['C_CONTIGUOUS']:
-#      warn("ndarray mag should be continguous in order to increase performance!")
-#
-#      mag = np.ascontiguousarray(mag)
-#
-#
-#    self.cobj.calculate_potential(N, <double(*)[3]> mag.data, <double(*)> potential.data)
-#    return potential
-#
+  def calculate_potential(self, np.ndarray[np.float64_t,ndim=2] u1):
+    cdef int N = u1.shape[0]
+    cdef np.ndarray[np.float64_t, ndim=1] u2 = np.zeros(N)
+    if not u1.flags['C_CONTIGUOUS']:
+      warn("ndarray mag should be continguous in order to increase performance!")
+      u1 = np.ascontiguousarray(u1)
+
+    self.cobj.matvec(N, <double(*)> u1.data, <double(*)> u2.data)
+    return u2
+
 #  def print_args(self):
 #    self.cobj.print_args()
 #

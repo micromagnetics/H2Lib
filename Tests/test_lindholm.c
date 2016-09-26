@@ -348,6 +348,7 @@ int main(int argc, char **argv) {
   ptruncmode tm;
   ph2matrix Kh2;
   pstopwatch sw;
+  pavector x, b;
 
   init_h2lib(&argc, &argv);
   sw = new_stopwatch();
@@ -419,6 +420,15 @@ int main(int argc, char **argv) {
 
 //  printf("rel error: %.5e\n",
 //      norm2diff_amatrix_h2matrix(Kh2, K) / norm2_amatrix(K));
+
+
+  // Test H2Matrix - Vector - Multiplication
+  printf("TEST Matrix Vector Multiplication\n");
+  x = new_avector(vertices);
+  random_avector(x);
+  b = new_avector(vertices);
+  clear_avector(b);
+  mvm_h2matrix_avector(1., false, Kh2, x, b);
 
 //  del_amatrix(K);
   del_cluster(root);

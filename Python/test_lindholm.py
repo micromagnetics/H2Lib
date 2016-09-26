@@ -12,8 +12,12 @@ File("bmesh.pvd") << bmesh
 #x.geometry_from_file("model.msh")
 #x.setup()
 
-print "COORDS:", coords
-print "CELLS:", cells
 x = lindholm.Lindholm()
 x.geometry_from_array(coords, cells)
 x.setup()
+print "TEST"
+
+V = FunctionSpace(mesh, "CG", 1)
+u1 = interpolate(Constant(1.0), V)
+
+print x.matvec(u1.vector().array())
