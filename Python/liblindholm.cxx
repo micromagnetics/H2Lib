@@ -185,142 +185,206 @@ static void doublelayer_lindholm_C(double x[3], double x1[3], double x2[3],
 
 }
 
-/* H2Lib interface */
-static void fill_dlp_l_collocation_near_laplacebem3d(const uint * ridx,
-    const uint * cidx, pcbem3d bem, bool ntrans, pamatrix N) {
+void assemble_doublelayer_lindholm_C(int NB, double nodes[][3], int NEB,
+                                     int triangles[][3], double M[])
+{
+  int       nb, neb, i;
+  double    res[3];
+
+  for (neb = 0; neb < NEB; neb++) {
+    for (nb = 0; nb < NB; nb++) {
+      doublelayer_lindholm_C(nodes[nb], nodes[triangles[neb][0]],
+			     nodes[triangles[neb][1]],
+			     nodes[triangles[neb][2]], res);
+      for (i = 0; i < 3; i++) {
+	M[nb * NB + triangles[neb][i]] += res[i];
+      }
+    }
+  }
+
+  return;
+}
+
+/*** H2Lib interface ***/
+static void
+fill_dlp_l_collocation_near_laplacebem3d(const uint * ridx,
+					 const uint * cidx, pcbem3d bem,
+					 bool ntrans, pamatrix N)
+{
   pcsurface3d gr = bem->gr;
-  real (*gr_x)[3] = (real (*)[3]) gr->x;
-  uint (*gr_t)[3] = (uint (*)[3]) gr->t;
+  real(*gr_x)[3] = (real(*)[3]) gr->x;
+  uint(*gr_t)[3] = (uint(*)[3]) gr->t;
   plistnode *v2t = bem->v2t;
-  uint triangles = gr->triangles;
-  uint vertices = gr->vertices;
-  field *aa = N->a;
-  uint rows = ntrans ? N->cols : N->rows;
-  uint cols = ntrans ? N->rows : N->cols;
+  uint      triangles = gr->triangles;
+  uint      vertices = gr->vertices;
+  field    *aa = N->a;
+  uint      rows = ntrans ? N->cols : N->rows;
+  uint      cols = ntrans ? N->rows : N->cols;
   longindex ld = N->ld;
 
-  ptri_list tl_r;
+  ptri_list tl_c;
 
 #ifdef USE_OPENMP
 #pragma omp parallel if(!omp_in_parallel() && (cols > 64*(1 << max_pardepth))) num_threads(1 << max_pardepth)
   {
 #endif
 
-  ptri_list tl1_r;
-  pvert_list vl_r;
-  plistnode v;
-  uint i, ii, j, jj, l, rj, vv;
-  uint *tri_i;
-  real res[3];
+    ptri_list tl1_c;
+    pvert_list vl_c;
+    plistnode v;
+    uint      j, jj, i, ii, l, cj, vv;
+    uint     *tri_j;
+    real      res[3];
 
 #ifdef USE_OPENMP
 #pragma omp single
-  {
+    {
 #endif
-  clear_amatrix(N);
+      clear_amatrix(N);
 
-  tl_r = NULL;
+      tl_c = NULL;
 
-  rj = 0;
-  for (i = 0; i < rows; ++i) {
-    ii = (ridx == NULL ? i : ridx[i]);
-    for (v = v2t[ii], vv = v->data; v->next != NULL;
-        v = v->next, vv = v->data) {
+      cj = 0;
+      for (j = 0; j < cols; ++j) {
+	jj = (cidx == NULL ? j : cidx[j]);
+	for (v = v2t[jj], vv = v->data; v->next != NULL;
+	     v = v->next, vv = v->data) {
 
-      tl1_r = tl_r;
-      while (tl1_r && tl1_r->t != vv) {
-        tl1_r = tl1_r->next;
+	  tl1_c = tl_c;
+	  while (tl1_c && tl1_c->t != vv) {
+	    tl1_c = tl1_c->next;
+	  }
+
+	  if (tl1_c == NULL) {
+	    tl1_c = tl_c = new_tri_list(tl_c);
+	    tl_c->t = vv;
+	    cj++;
+	  }
+
+	  tl1_c->vl = new_vert_list(tl1_c->vl);
+	  tl1_c->vl->v = j;
+	}
       }
-
-      if (tl1_r == NULL) {
-        tl1_r = tl_r = new_tri_list(tl_r);
-        tl_r->t = vv;
-        rj++;
-      }
-
-      tl1_r->vl = new_vert_list(tl1_r->vl);
-      tl1_r->vl->v = i;
-    }
-  }
 
 #ifdef USE_OPENMP
-}
+    }
 #pragma omp for
 #endif
-  for (j = 0; j < cols; ++j) {
-    jj = (cidx == NULL ? j : cidx[j]);
-    assert(jj < vertices);
-    for (tl1_r = tl_r; tl1_r != NULL; tl1_r = tl1_r->next) {
-      ii = tl1_r->t;
-      assert(ii < triangles);
+    for (i = 0; i < rows; ++i) {
+      ii = (ridx == NULL ? i : ridx[i]);
+      assert(ii < vertices);
+      for (tl1_c = tl_c; tl1_c != NULL; tl1_c = tl1_c->next) {
+	jj = tl1_c->t;
+	assert(jj < triangles);
 
-      tri_i = gr_t[ii];
+	tri_j = gr_t[jj];
 
-      doublelayer_lindholm_C(gr_x[jj], gr_x[tri_i[0]], gr_x[tri_i[1]],
-          gr_x[tri_i[2]], res);
+	doublelayer_lindholm_C(gr_x[ii], gr_x[tri_j[0]], gr_x[tri_j[1]],
+			       gr_x[tri_j[2]], res);
 
-      vl_r = tl1_r->vl;
-      while (vl_r) {
-        i = vl_r->v;
-        if (i < rows) {
-          ii = (ridx == NULL ? i : ridx[i]);
-          for (l = 0; l < 3; ++l) {
-            if (ii == tri_i[l]) {
-              if (ntrans) {
-                aa[j + i * ld] += res[l];
-              } else {
-                aa[i + j * ld] += res[l];
-              }
-            }
-          }
-        }
-        vl_r = vl_r->next;
+	vl_c = tl1_c->vl;
+	while (vl_c) {
+	  j = vl_c->v;
+	  if (j < cols) {
+	    jj = (cidx == NULL ? j : cidx[j]);
+	    for (l = 0; l < 3; ++l) {
+	      if (jj == tri_j[l]) {
+		if (ntrans) {
+		  aa[j + i * ld] += res[l];
+		}
+		else {
+		  aa[i + j * ld] += res[l];
+		}
+	      }
+	    }
+	  }
+	  vl_c = vl_c->next;
+	}
       }
     }
-  }
 
 #ifdef USE_OPENMP
-}
+  }
 #endif
 
-  del_tri_list(tl_r);
+  del_tri_list(tl_c);
 
 }
 
-static pbem3d new_dlp_collocation_laplace_bem3d(pcsurface3d gr, uint q_regular,
-    uint q_singular, basisfunctionbem3d basis_neumann,
-    basisfunctionbem3d basis_dirichlet) {
+static void assemble_fundamental_collocation_row_bem3d(const uint * idx, const real(*Z)[3], pcbem3d bem, bool trans, pamatrix A)
+{
+  real(*X)[3] = (real(*)[3]) allocreal(3 * A->rows);
+  uint      i, ii;
 
-  pbem3d bem;
-
-  bem = new_bem3d(gr);
-
-  if (basis_neumann == BASIS_LINEAR_BEM3D || basis_dirichlet
-      == BASIS_LINEAR_BEM3D) {
-    setup_vertex_to_triangle_map_bem3d(bem);
+  for (i = 0; i < A->rows; ++i) {
+    ii = (idx != NULL ? idx[i] : i);
+    X[i][0] = bem->gr->x[ii][0];
+    X[i][1] = bem->gr->x[ii][1];
+    X[i][2] = bem->gr->x[ii][2];
   }
 
-  bem->sq = build_singquad2d(gr, q_regular, q_singular);
+  bem->kernels->fundamental(bem, X, Z, A);
 
-  bem->basis_neumann = basis_neumann;
-  bem->basis_dirichlet = basis_dirichlet;
+  freemem(X);
+}
 
-  bem->N_neumann = gr->vertices;
-  bem->N_dirichlet = gr->vertices;
+static void assemble_dnz_fundamental_collocation_row_bem3d(const uint * idx, const real(*Z)[3], const real(*N)[3], pcbem3d bem, bool trans, pamatrix A)
+{
+  real(*X)[3] = (real(*)[3]) allocreal(3 * A->rows);
+  uint      i, ii;
 
-  assert(
-      basis_neumann == BASIS_LINEAR_BEM3D && basis_dirichlet
-          == BASIS_LINEAR_BEM3D);
+  for (i = 0; i < A->rows; ++i) {
+    ii = (idx != NULL ? idx[i] : i);
+    X[i][0] = bem->gr->x[ii][0];
+    X[i][1] = bem->gr->x[ii][1];
+    X[i][2] = bem->gr->x[ii][2];
+  }
+
+  bem->kernels->dny_fundamental(bem, X, Z, N, A);
+
+  freemem(X);
+}
+
+static void assemble_lagrange_collocation_row_bem3d(const uint * idx, pcrealavector px, pcrealavector py, pcrealavector pz, pcbem3d bem, pamatrix A)
+{
+  real(*X)[3] = (real(*)[3]) allocreal(3 * A->rows);
+  uint      i, ii;
+
+  for (i = 0; i < A->rows; ++i) {
+    ii = (idx != NULL ? idx[i] : i);
+    X[i][0] = bem->gr->x[ii][0];
+    X[i][1] = bem->gr->x[ii][1];
+    X[i][2] = bem->gr->x[ii][2];
+  }
+
+  assemble_bem3d_lagrange_amatrix(X, px, py, pz, bem, A);
+
+  freemem(X);
+}
+
+static pbem3d new_dlp_collocation_laplace_bem3d(pcsurface3d gr, uint q_regular, uint q_singular, basisfunctionbem3d basis_neumann, basisfunctionbem3d basis_dirichlet)
+{
+
+  pbem3d    bem;
+
+  bem = new_dlp_laplace_bem3d(gr, q_regular, q_singular, basis_neumann,
+			      basis_dirichlet, 0.5);
+
+  assert(basis_neumann == BASIS_LINEAR_BEM3D && basis_dirichlet
+	 == BASIS_LINEAR_BEM3D);
 
   bem->nearfield = fill_dlp_l_collocation_near_laplacebem3d;
   bem->nearfield_far = fill_dlp_l_collocation_near_laplacebem3d;
+
+  bem->kernels->fundamental_row = assemble_fundamental_collocation_row_bem3d;
+  bem->kernels->dnz_fundamental_row = assemble_dnz_fundamental_collocation_row_bem3d;
+  bem->kernels->lagrange_row = assemble_lagrange_collocation_row_bem3d;
 
   return bem;
 }
 
 int Lindholm_C::geometry_from_file(std::string infile)
 {
-//   gr = build_interactive_surface3d();
   gr = read_gmsh_surface3d(infile.c_str());
   printf("Geometry has %d vertices, %d edges, %d triangles\n", gr->vertices,
       gr->edges, gr->triangles);

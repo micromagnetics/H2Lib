@@ -7,12 +7,13 @@
 #include <omp.h>
 #endif
 
-#include "basic.h"
-#include "avector.h"
-#include "surface3d.h"
-#include "laplacebem3d.h"
-#include "h2compression.h"
-
+extern "C" {
+  #include "basic.h"
+  #include "avector.h"
+  #include "surface3d.h"
+  #include "laplacebem3d.h"
+  #include "h2compression.h"
+}
 
 class Lindholm_C {
   public:
