@@ -27,6 +27,17 @@ set(CMAKE_C_FLAGS "-O3 -Wall -march=native -funroll-loops -funswitch-loops ${CMA
 set(CMAKE_C_FLAGS_DEBUG "-g -Wall ${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -Wall ${CMAKE_C_FLAGS_RELEASE}")
 
+# Options
+option(USE_OPENMP "Compile with openmp" ON)
+find_package(OpenMP)
+if (USE_OPENMP AND OPENMP_FOUND)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+endif ()
+
+option(USE_SIMD "Compile with SIMD" OFF)
+if (USE_SIMD)
+  add_definitions(-DUSE_SIMD)
+endif ()
 
 ##############################################################
 ###    Subdirectories                                      ###
