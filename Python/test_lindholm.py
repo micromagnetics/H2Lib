@@ -17,7 +17,8 @@ x.geometry_from_array(coords, cells)
 x.setup()
 print "TEST"
 
-V = FunctionSpace(mesh, "CG", 1)
+bmesh.order()
+V = FunctionSpace(bmesh, "CG", 1)
 u1 = interpolate(Constant(1.0), V)
 
 print x.matvec(u1.vector().array())

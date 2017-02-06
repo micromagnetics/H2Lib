@@ -36,7 +36,7 @@ cdef class Lindholm:
   def setup(self):
     return self.cobj.setup()
 
-  def calculate_potential(self, np.ndarray[np.float64_t,ndim=2] u1):
+  def matvec(self, np.ndarray[np.float64_t,ndim=1] u1):
     cdef int N = u1.shape[0]
     cdef np.ndarray[np.float64_t, ndim=1] u2 = np.zeros(N)
     if not u1.flags['C_CONTIGUOUS']:

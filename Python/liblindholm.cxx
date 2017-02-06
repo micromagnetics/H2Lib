@@ -349,7 +349,6 @@ int Lindholm_C::setup()
   printf("================================\n");
 
   printf("Setup and fill H-matrix K:\n");
-  start_stopwatch(sw);
   root = build_bem3d_cluster(bem, clf, BASIS_LINEAR_BEM3D);
   printf("  %d clusters created\n", root->desc);
   broot = build_strict_block(root, root, &eta, admissible_2_cluster);
@@ -362,19 +361,16 @@ int Lindholm_C::setup()
   setup_hmatrix_recomp_bem3d(bem, true, eps_recomp, true, eps_recomp);
   assemble_bem3d_hmatrix(bem, broot, Kh);
 
-  printf("  %.2f s\n", stop_stopwatch(sw));
   printf("  %.3f MB\n", getsize_hmatrix(Kh) / 1024.0 / 1024.0);
   printf("================================\n");
 
   printf("Convert H-matrix Kh to H2-matrix kh2:\n");
-  start_stopwatch(sw);
   Kh2 = compress_hmatrix_h2matrix(Kh, tm, eps_recomp);
-  printf("  %.2f s\n", stop_stopwatch(sw));
   printf("  %.3f MB\n",
       (getsize_h2matrix(Kh2) + getsize_clusterbasis(Kh2->rb)
        + getsize_clusterbasis(Kh2->cb))
       / 1024.0 / 1024.0);
-//  return(0);
+  return(0);
 }
 
 int Lindholm_C::matvec(unsigned int N, double x[], double b[])
@@ -383,7 +379,10 @@ int Lindholm_C::matvec(unsigned int N, double x[], double b[])
   pavector x_vec, b_vec;
   x_vec = new_pointer_avector((double *)x, N);
   b_vec = new_pointer_avector((double *)b, N);
+//print_avector(x_vec);
+//print_avector(b_vec);
   mvm_h2matrix_avector(1., false, Kh2, x_vec, b_vec);
+//print_avector(b_vec);
   del_avector(x_vec);
   del_avector(b_vec);
   return(0);
@@ -395,10 +394,10 @@ Lindholm_C::Lindholm_C()
   q_reg = 2;
   q_sing = 1;
   clf = 32;
-  eta = 2.0;
-  eps_aca = 1.0e-4;
+  eta = 0.1;
+  eps_aca = 1.0e-8;
   tm = new_releucl_truncmode();
-  eps_recomp = 1.0e-4;
+  eps_recomp = 1.0e-8;
 
   root = NULL;
   broot = NULL;
