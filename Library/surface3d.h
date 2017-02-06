@@ -315,6 +315,10 @@ read_gmsh_surface3d(const char *filename);
 HEADER_PREFIX psurface3d
 read_unv_surface3d(char *filename);
 
+/* TODO: document */
+HEADER_PREFIX psurface3d
+create_surface3d_fromarray(unsigned int N, double coordinates[][3], unsigned int NE, int elements[][3]);
+
 /* ------------------------------------------------------------
  * Mesh refinement
  * ------------------------------------------------------------ */

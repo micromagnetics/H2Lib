@@ -1,0 +1,5 @@
+# compile 
+g++ -I ../Library/ -L../build/Library liblindholm.cxx -lm -lH2Lib
+
+# run python test
+PYTHONPATH=/home/florian/git/H2Lib/Python/build/lib.linux-x86_64-2.7/ LD_LIBRARY_PATH=/home/florian/git/H2Lib/build/Library/ python test_lindholm.py 

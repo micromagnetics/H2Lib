@@ -120,10 +120,11 @@ SOURCES_tests := \
 	Tests/test_helmholtzbem3d_ocl.c \
 	Tests/test_h2compression.c \
 	Tests/test_tet3dp1.c \
-	Tests/test_tri2dp1.c\
-	Tests/test_ddcluster.c\
-	Tests/test_tri2drt0.c\
-	Tests/test_tet3drt0.c
+	Tests/test_tri2dp1.c \
+	Tests/test_ddcluster.c \
+	Tests/test_tri2drt0.c \
+	Tests/test_tet3drt0.c \
+	Tests/test_lindholm.c
 
 OBJECTS_tests := \
 	$(SOURCES_tests:.c=.o)
