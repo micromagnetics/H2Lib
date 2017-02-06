@@ -522,6 +522,7 @@ main(int argc, char **argv)
   ph2matrix Kh2;
   pclusterbasis rb, cb;
   pstopwatch sw;
+  pavector x, b;
 
   init_h2lib(&argc, &argv);
   sw = new_stopwatch();
@@ -532,13 +533,13 @@ main(int argc, char **argv)
   eta = 2.0;
   m = 2;
   delta = 2.0;
-  eps_aca = 1.0e-13;
+  eps_aca = 1.0e-8;
   tm = new_releucl_truncmode();
   eps_recomp = 2.0e-3;
 
 //  gr = build_interactive_surface3d();
   gr = read_gmsh_surface3d("keil2.msh");
-  gr = refine_red_surface3d(gr);
+//  gr = refine_red_surface3d(gr);
   //gr = refine_red_surface3d(gr);
 //  gr = refine_red_surface3d(gr);
 
@@ -554,12 +555,16 @@ main(int argc, char **argv)
   K = new_zero_amatrix(vertices, vertices);
 //  K2 = new_zero_amatrix(vertices, vertices);
 
-  printf("Fill dense matrix K (analytically):\n");
-  start_stopwatch(sw);
-  bem->nearfield(NULL, NULL, bem, false, K);
-  printf("  %.2f s\n", stop_stopwatch(sw));
-  printf("  %.3f MB\n", getsize_amatrix(K) / 1024.0 / 1024.0);
+  printf("Dense matrix K:\n");
+  printf("  %.3lf MB\n", (double)(vertices)*vertices * 8. / 1024.0 / 1024.0);
   printf("================================\n");
+
+//  printf("Fill dense matrix K (analytically):\n");
+//  start_stopwatch(sw);
+//  bem->nearfield(NULL, NULL, bem, false, K);
+//  printf("  %.2f s\n", stop_stopwatch(sw));
+//  printf("  %.3f MB\n", getsize_amatrix(K) / 1024.0 / 1024.0);
+//  printf("================================\n");
 
 //  printf("Fill dense matrix K (by quadrature):\n");
 //  start_stopwatch(sw);
@@ -578,16 +583,6 @@ main(int argc, char **argv)
 
   Kh = build_from_block_hmatrix(broot, 0);
 
-//#ifdef USE_CAIRO
-//  cairo_t *cr;
-//  /* Check Cairo drawing */
-//  (void) printf("----------------------------------------\n"
-//    "Checking Cairo drawing\n" "  Drawing to \"hmatrix.pdf\"\n");
-//  cr = new_cairopdf("hmatrix.pdf", 600.0, 600.0);
-//  draw_cairo_hmatrix(cr, Kh, true, 0);
-//  cairo_destroy(cr);
-//#endif
-
 //  setup_hmatrix_aprx_paca_bem3d(bem, root, root, broot, eps_aca);
 //  setup_hmatrix_aprx_aca_bem3d(bem, root, root, broot, eps_aca);
   setup_hmatrix_aprx_hca_bem3d(bem, root, root, broot, 5, eps_aca);
@@ -599,8 +594,8 @@ main(int argc, char **argv)
   printf("  %.2f s\n", stop_stopwatch(sw));
   printf("  %.3f MB\n", getsize_hmatrix(Kh) / 1024.0 / 1024.0);
 
-  printf("rel error: %.5e\n",
-	 norm2diff_amatrix_hmatrix(Kh, K) / norm2_amatrix(K));
+//  printf("rel error: %.5e\n",
+//	 norm2diff_amatrix_hmatrix(Kh, K) / norm2_amatrix(K));
   printf("================================\n");
 
   printf("Convert H-matrix Kh to H2-matrix kh2:\n");
@@ -613,32 +608,9 @@ main(int argc, char **argv)
 			 + getsize_clusterbasis(Kh2->cb))
 	 / 1024.0 / 1024.0);
 
-  printf("rel error: %.5e\n",
-	 norm2diff_amatrix_h2matrix(Kh2, K) / norm2_amatrix(K));
+//  printf("rel error: %.5e\n",
+//	 norm2diff_amatrix_h2matrix(Kh2, K) / norm2_amatrix(K));
   printf("================================\n");
-
-//  phmatrix current = Kh->son[1]->son[1]->son[1]->son[1]->son[1];
-//  if(current->r != NULL) {
-//    pamatrix Z = new_zero_amatrix(current->rc->size, current->cc->size);
-//
-//    addmul_amatrix(1.0, false, &current->r->A, true, &current->r->B, Z);
-//    print_amatrix(Z);
-//
-//    bem->nearfield(current->rc->idx, current->cc->idx, bem, false, Z);
-//    print_amatrix(Z);
-//
-//    current = Kh->son[2]->son[2]->son[2]->son[2]->son[1];
-//    assert(current != NULL);
-//    assert(current->r != NULL);
-//
-//    Z = new_zero_amatrix(current->rc->size, current->cc->size);
-//
-//    addmul_amatrix(1.0, false, &current->r->A, true, &current->r->B, Z);
-//    print_amatrix(Z);
-//
-//    bem->nearfield(current->rc->idx, current->cc->idx, bem, false, Z);
-//    print_amatrix(Z);
-//  }
 
 //  rb = build_from_cluster_clusterbasis(root);
 //  cb = build_from_cluster_clusterbasis(root);
@@ -711,8 +683,8 @@ main(int argc, char **argv)
   printf("  %.2f s\n", stop_stopwatch(sw));
   printf("  %.3f MB\n", getsize_h2matrix(Kh2) / 1024.0 / 1024.0);
 
-  printf("rel error: %.5e\n",
-	 norm2diff_amatrix_h2matrix(Kh2, K) / norm2_amatrix(K));
+//  printf("rel error: %.5e\n",
+//	 norm2diff_amatrix_h2matrix(Kh2, K) / norm2_amatrix(K));
   printf("================================\n");
 
   printf("Recompress H2-matrix:\n");
@@ -721,9 +693,17 @@ main(int argc, char **argv)
   printf("  %.2f s\n", stop_stopwatch(sw));
   printf("  %.3f MB\n", getsize_h2matrix(Kh2) / 1024.0 / 1024.0);
 
-  printf("rel error: %.5e\n",
-	 norm2diff_amatrix_h2matrix(Kh2, K) / norm2_amatrix(K));
+//  printf("rel error: %.5e\n",
+//	 norm2diff_amatrix_h2matrix(Kh2, K) / norm2_amatrix(K));
   printf("================================\n");
+
+  // Test H2Matrix - Vector - Multiplication
+  printf("TEST Matrix Vector Multiplication\n");
+  x = new_avector(vertices);
+  random_avector(x);
+  b = new_avector(vertices);
+  clear_avector(b);
+  mvm_h2matrix_avector(1., false, Kh2, x, b);
 
   del_amatrix(K);
   del_cluster(root);

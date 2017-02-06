@@ -12,7 +12,7 @@ find_library(M_LIB m)
 set(SRC
   test_amatrix.c test_eigen.c test_h2compression.c 
   test_h2matrix.c test_hmatrix.c test_laplacebem2d.c 
-  test_laplacebem3d.c test_lindholm.c
+  test_laplacebem3d.c test_laplacebem3d_lindholm.c
 )
 
 foreach( testsourcefile ${SRC} )
