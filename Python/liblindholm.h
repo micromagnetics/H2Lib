@@ -20,28 +20,29 @@ class Lindholm_C {
     Lindholm_C();
     int geometry_from_file(std::string infile);
     int geometry_from_array(unsigned int N, double coordinates[][3], unsigned int NE, int elements[][3]);
-    int setup();
+    int setup_HCA();
+    int setup_GCA();
     int matvec(unsigned int N, double x[], double b[]);
+    int get_size();
     ~Lindholm_C();
 
   private:
-    // variable definitions
+    int _setup_root();
     psurface3d gr;
     uint vertices;
     uint q_reg, q_sing;
     pbem3d bem;
     uint clf;
     pcluster root;
+    pclusterbasis rb, cb;
     real eta;
     pblock broot;
-    phmatrix Kh;
     real eps_aca;
     real eps_recomp;
+    real delta;
+    uint m;
     ptruncmode tm;
     ph2matrix Kh2;
-    pstopwatch sw;
-
-    // method definitions
 };
 
 

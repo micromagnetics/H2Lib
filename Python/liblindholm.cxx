@@ -404,7 +404,7 @@ int Lindholm_C::geometry_from_array(unsigned int N, double coordinates[][3], uns
   return(0);
 }
 
-int Lindholm_C::setup()
+int Lindholm_C::_setup_root()
 {
   bem = new_dlp_collocation_laplace_bem3d(gr, q_reg, q_sing, BASIS_LINEAR_BEM3D, BASIS_LINEAR_BEM3D);
 
@@ -412,28 +412,84 @@ int Lindholm_C::setup()
   printf("  %.3lf MB\n", (double)(vertices)*vertices * 8. / 1024.0 / 1024.0);
   printf("================================\n");
 
-  printf("Setup and fill H-matrix K:\n");
   root = build_bem3d_cluster(bem, clf, BASIS_LINEAR_BEM3D);
   printf("  %d clusters created\n", root->desc);
   broot = build_strict_block(root, root, &eta, admissible_2_cluster);
   printf("  %d blocks created\n", broot->desc);
+}
 
+int Lindholm_C::setup_HCA()
+{
+  pstopwatch sw = new_stopwatch();
+  _setup_root();
+  printf("Setup and fill H-matrix K:\n");
+  start_stopwatch(sw);
+  phmatrix Kh;
   Kh = build_from_block_hmatrix(broot, 0);
 
 //  setup_hmatrix_aprx_paca_bem3d(bem, root, root, broot, eps_aca);
-  setup_hmatrix_aprx_aca_bem3d(bem, root, root, broot, eps_aca);
-  setup_hmatrix_recomp_bem3d(bem, true, eps_recomp, true, eps_recomp);
+//  setup_hmatrix_aprx_aca_bem3d(bem, root, root, broot, eps_aca);
+  setup_hmatrix_aprx_hca_bem3d(bem, root, root, broot, 5, eps_aca);
+//  setup_hmatrix_aprx_inter_row_bem3d(bem, root, root, broot, 5);
+//  setup_hmatrix_recomp_bem3d(bem, true, eps_recomp, true, eps_recomp); // TODO: enable this?
   assemble_bem3d_hmatrix(bem, broot, Kh);
 
+  printf("  %.2f s\n", stop_stopwatch(sw));
   printf("  %.3f MB\n", getsize_hmatrix(Kh) / 1024.0 / 1024.0);
   printf("================================\n");
-
   printf("Convert H-matrix Kh to H2-matrix kh2:\n");
+  start_stopwatch(sw);
   Kh2 = compress_hmatrix_h2matrix(Kh, tm, eps_recomp);
+  printf("  %.2f s\n", stop_stopwatch(sw));
   printf("  %.3f MB\n",
       (getsize_h2matrix(Kh2) + getsize_clusterbasis(Kh2->rb)
        + getsize_clusterbasis(Kh2->cb))
       / 1024.0 / 1024.0);
+  del_hmatrix(Kh); // TODO: free H-matrix
+  del_stopwatch(sw);
+  return(0);
+}
+
+int Lindholm_C::setup_GCA()
+{
+  pstopwatch sw = new_stopwatch();
+  _setup_root();
+  rb = build_from_cluster_clusterbasis(root); // TODO: need to be freed?
+  cb = build_from_cluster_clusterbasis(root);
+
+  setup_h2matrix_aprx_greenhybrid_bem3d(bem, rb, cb, broot, m, 1, delta,
+					eps_aca, build_bem3d_cube_quadpoints);
+
+  printf("assemble row basis:\n");
+  start_stopwatch(sw);
+  assemble_bem3d_h2matrix_row_clusterbasis(bem, rb);
+  printf("  %.2f s\n", stop_stopwatch(sw));
+  printf("  %.3f MB\n", getsize_clusterbasis(rb) / 1024.0 / 1024.0);
+  printf("================================\n");
+
+  printf("assemble col basis:\n");
+  start_stopwatch(sw);
+  assemble_bem3d_h2matrix_col_clusterbasis(bem, cb);
+  printf("  %.2f s\n", stop_stopwatch(sw));
+  printf("  %.3f MB\n", getsize_clusterbasis(cb) / 1024.0 / 1024.0);
+  printf("================================\n");
+
+  Kh2 = build_from_block_h2matrix(broot, rb, cb);
+
+  printf("Assemble H2-matrix:\n");
+  start_stopwatch(sw);
+  assemble_bem3d_h2matrix(bem, Kh2);
+  printf("  %.2f s\n", stop_stopwatch(sw));
+  printf("  %.3f MB\n", getsize_h2matrix(Kh2) / 1024.0 / 1024.0);
+  printf("================================\n");
+
+  printf("Recompress H2-matrix:\n");
+  start_stopwatch(sw);
+  recompress_inplace_h2matrix(Kh2, tm, eps_recomp);
+  printf("  %.2f s\n", stop_stopwatch(sw));
+  printf("  %.3f MB\n", getsize_h2matrix(Kh2) / 1024.0 / 1024.0);
+  printf("================================\n");
+  del_stopwatch(sw);
   return(0);
 }
 
@@ -452,41 +508,59 @@ int Lindholm_C::matvec(unsigned int N, double x[], double b[])
   return(0);
 }
 
+int Lindholm_C::get_size()
+{
+  int size = -1;
+
+  if ((Kh2 != NULL) && (Kh2->rb != NULL) && (Kh2->cb != 0)) {
+    size = getsize_h2matrix(Kh2) + getsize_clusterbasis(Kh2->rb) + getsize_clusterbasis(Kh2->cb);
+  }
+  return(size);
+}
+
+
 Lindholm_C::Lindholm_C()
 {
-  sw = new_stopwatch();
-  q_reg = 2;
-  q_sing = 1;
+  q_reg = 3;
+  q_sing = q_reg + 2;
   clf = 32;
-  eta = 0.1;
+  eta = 2.0;
+  m = 2;
+  delta = 2.0;
   eps_aca = 1.0e-8;
   tm = new_releucl_truncmode();
-  eps_recomp = 1.0e-8;
+  eps_recomp = 2.0e-3;
 
   root = NULL;
   broot = NULL;
-  Kh = NULL;
   Kh2 = NULL;
   bem = NULL;
   gr = NULL;
-  sw = NULL;
 }
 
 Lindholm_C::~Lindholm_C()
 {
   if (root != NULL) del_cluster(root);
   if (broot != NULL) del_block(broot);
-  if (Kh != NULL) del_hmatrix(Kh);
   if (Kh2 != NULL) del_h2matrix(Kh2);
   if (bem != NULL) del_bem3d(bem);
   if (gr != NULL) del_surface3d(gr);
-  if (sw != NULL) del_stopwatch(sw);
 }
 
 int main( void )
 {
   Lindholm_C h2lib;
+  pavector x, b;
   h2lib.geometry_from_file("model.msh");
-  h2lib.setup();
-//  h2lib.mvm_h2matrix();
+//  h2lib.setup_orig();
+  h2lib.setup_HCA();
+//  printf("TEST Matrix Vector Multiplication\n");
+//  x = new_avector(vertices);
+//  random_avector(x);
+//  b = new_avector(vertices);
+//  clear_avector(b);
+//  mvm_h2matrix_avector(1., false, h2lib.Kh2, x, b);
+  printf("SIZE: %d\n", h2lib.get_size());
 }
+
+// TODO: init / uninit?
