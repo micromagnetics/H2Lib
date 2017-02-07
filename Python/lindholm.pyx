@@ -10,11 +10,10 @@ cdef extern from "liblindholm.h":
     Lindholm_C()
     int geometry_from_file(string infile) except +
     int geometry_from_array(unsigned int N, double coordinates[][3], unsigned int NE, int cells[][3]) except +
-    int setup() except +
+    int setup_HCA() except +
+    int setup_GCA() except +
     int matvec(unsigned int N, double x[], double b[]) except +
-#    int print_args()
-#    int writeINP(string &outfile) except +
-
+    int get_size()
 
 ### Python wrappers
 cdef class Lindholm:
@@ -33,8 +32,13 @@ cdef class Lindholm:
     cells = np.ascontiguousarray(cells)
     return self.cobj.geometry_from_array(N, <double(*)[3]> nodes.data, NE, <int(*)[3]> cells.data)
 
-  def setup(self):
-    return self.cobj.setup()
+  def setup(self, method="GCA"):
+    if method == "GCA":
+      return self.cobj.setup_GCA()
+    elif method == "HCA":
+      return self.cobj.setup_HCA()
+    else:
+      raise RuntimeError("H2Matrix assembly method '%s' not known (use 'GCA' or 'HCA')" % method)
 
   def matvec(self, np.ndarray[np.float64_t,ndim=1] u1):
     cdef int N = u1.shape[0]
@@ -46,12 +50,9 @@ cdef class Lindholm:
     self.cobj.matvec(N, <double(*)> u1.data, <double(*)> u2.data)
     return u2
 
-#  def print_args(self):
-#    self.cobj.print_args()
-#
-#  def writeINP(self, string outfile):
-#    return self.cobj.writeINP(outfile)
-#
+  def get_size(self):
+    return self.cobj.get_size()
+
   def __dealloc__(self):
     if self.cobj != NULL:
       del self.cobj

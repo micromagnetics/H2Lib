@@ -2,7 +2,7 @@ from distutils.core import setup
 from Cython.Build import cythonize
 from distutils.extension import Extension
 
-ext1 = Extension("bem_lindholm",
+ext1 = Extension("lindholm",
                  sources = ["lindholm.pyx", "liblindholm.cxx"],
                  include_dirs = ["../Library"],
                  library_dirs = ["../build/Library"],
@@ -12,7 +12,7 @@ ext1 = Extension("bem_lindholm",
                  language="c++"
 )
 
-setup(name='bem_lindholm',
+setup(name='lindholm',
       description='H2Matrix using Analytic Doublelayer Potential proposed by Lindholm',
       author='Florian Bruckner',
       author_email='florian.bruckner@tuwien.ac.at',

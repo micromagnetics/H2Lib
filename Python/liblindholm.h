@@ -27,14 +27,14 @@ class Lindholm_C {
     ~Lindholm_C();
 
   private:
-    int _setup_root();
+    int _setup_init();
+    int _setup_cleanup();
     psurface3d gr;
     uint vertices;
     uint q_reg, q_sing;
     pbem3d bem;
     uint clf;
     pcluster root;
-    pclusterbasis rb, cb;
     real eta;
     pblock broot;
     real eps_aca;

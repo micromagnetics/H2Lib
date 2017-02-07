@@ -404,7 +404,7 @@ int Lindholm_C::geometry_from_array(unsigned int N, double coordinates[][3], uns
   return(0);
 }
 
-int Lindholm_C::_setup_root()
+int Lindholm_C::_setup_init()
 {
   bem = new_dlp_collocation_laplace_bem3d(gr, q_reg, q_sing, BASIS_LINEAR_BEM3D, BASIS_LINEAR_BEM3D);
 
@@ -416,12 +416,20 @@ int Lindholm_C::_setup_root()
   printf("  %d clusters created\n", root->desc);
   broot = build_strict_block(root, root, &eta, admissible_2_cluster);
   printf("  %d blocks created\n", broot->desc);
+  return(0);
+}
+
+int Lindholm_C::_setup_cleanup()
+{ // TODO: check what can be free'd
+  if (broot != NULL) del_block(broot);
+  if (bem != NULL) del_bem3d(bem);
+  return(0);
 }
 
 int Lindholm_C::setup_HCA()
 {
   pstopwatch sw = new_stopwatch();
-  _setup_root();
+  _setup_init();
   printf("Setup and fill H-matrix K:\n");
   start_stopwatch(sw);
   phmatrix Kh;
@@ -447,13 +455,15 @@ int Lindholm_C::setup_HCA()
       / 1024.0 / 1024.0);
   del_hmatrix(Kh); // TODO: free H-matrix
   del_stopwatch(sw);
+  _setup_cleanup();
   return(0);
 }
 
 int Lindholm_C::setup_GCA()
 {
   pstopwatch sw = new_stopwatch();
-  _setup_root();
+  pclusterbasis rb, cb;
+  _setup_init();
   rb = build_from_cluster_clusterbasis(root); // TODO: need to be freed?
   cb = build_from_cluster_clusterbasis(root);
 
@@ -490,6 +500,7 @@ int Lindholm_C::setup_GCA()
   printf("  %.3f MB\n", getsize_h2matrix(Kh2) / 1024.0 / 1024.0);
   printf("================================\n");
   del_stopwatch(sw);
+  _setup_cleanup();
   return(0);
 }
 
@@ -499,10 +510,7 @@ int Lindholm_C::matvec(unsigned int N, double x[], double b[])
   pavector x_vec, b_vec;
   x_vec = new_pointer_avector((double *)x, N);
   b_vec = new_pointer_avector((double *)b, N);
-//print_avector(x_vec);
-//print_avector(b_vec);
   mvm_h2matrix_avector(1., false, Kh2, x_vec, b_vec);
-//print_avector(b_vec);
   del_avector(x_vec);
   del_avector(b_vec);
   return(0);
@@ -541,20 +549,19 @@ Lindholm_C::Lindholm_C()
 Lindholm_C::~Lindholm_C()
 {
   if (root != NULL) del_cluster(root);
-  if (broot != NULL) del_block(broot);
   if (Kh2 != NULL) del_h2matrix(Kh2);
-  if (bem != NULL) del_bem3d(bem);
   if (gr != NULL) del_surface3d(gr);
 }
 
 int main( void )
 {
   Lindholm_C h2lib;
-  pavector x, b;
   h2lib.geometry_from_file("model.msh");
-//  h2lib.setup_orig();
-  h2lib.setup_HCA();
+//  h2lib.setup_HCA();
+  h2lib.setup_GCA();
+
 //  printf("TEST Matrix Vector Multiplication\n");
+//  pavector x, b;
 //  x = new_avector(vertices);
 //  random_avector(x);
 //  b = new_avector(vertices);

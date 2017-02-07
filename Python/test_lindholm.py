@@ -14,7 +14,7 @@ File("bmesh.pvd") << bmesh
 
 x = lindholm.Lindholm()
 x.geometry_from_array(coords, cells)
-x.setup()
+x.setup(method="HCA")
 print "TEST"
 
 bmesh.order()
