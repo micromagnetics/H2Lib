@@ -1,7 +1,7 @@
 import lindholm
 from dolfin import *
 
-mesh = UnitCubeMesh(10,10,10)
+mesh = UnitCubeMesh(30,30,30)
 bmesh = BoundaryMesh(mesh, "exterior", False)
 coords = bmesh.coordinates()
 cells = bmesh.cells()
@@ -14,8 +14,7 @@ File("bmesh.pvd") << bmesh
 
 x = lindholm.Lindholm()
 x.geometry_from_array(coords, cells)
-x.setup(method="HCA")
-print "TEST"
+x.setup(method="GCA")
 
 bmesh.order()
 V = FunctionSpace(bmesh, "CG", 1)

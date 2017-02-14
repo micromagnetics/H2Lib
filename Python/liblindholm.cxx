@@ -553,9 +553,10 @@ Lindholm_C::~Lindholm_C()
   if (gr != NULL) del_surface3d(gr);
 }
 
-int main( void )
+int main( int argc, char **argv )
 {
   Lindholm_C h2lib;
+  init_h2lib(&argc, &argv);
   h2lib.geometry_from_file("model.msh");
 //  h2lib.setup_HCA();
   h2lib.setup_GCA();

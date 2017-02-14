@@ -123,8 +123,7 @@ SOURCES_tests := \
 	Tests/test_tri2dp1.c \
 	Tests/test_ddcluster.c \
 	Tests/test_tri2drt0.c \
-	Tests/test_tet3drt0.c \
-	Tests/test_lindholm.c
+	Tests/test_tet3drt0.c
 
 OBJECTS_tests := \
 	$(SOURCES_tests:.c=.o)
@@ -146,8 +145,7 @@ SOURCES_examples = \
 	Examples/example_hmatrix_bem3d.c \
 	Examples/example_h2matrix_bem3d.c\
 	Examples/example_fem_p1_harith.c\
-	Examples/example_fem_rt0_harith.c \
-	Tests/laplace_doublelayer_lindholm_c.c
+	Examples/example_fem_rt0_harith.c
 
 OBJECTS_examples = \
 	$(SOURCES_examples:.c=.o)

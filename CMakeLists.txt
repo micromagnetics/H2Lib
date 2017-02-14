@@ -32,6 +32,7 @@ option(USE_OPENMP "Compile with openmp" ON)
 find_package(OpenMP)
 if (USE_OPENMP AND OPENMP_FOUND)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  add_definitions(-DUSE_OPENMP)
 endif ()
 
 option(USE_SIMD "Compile with SIMD" OFF)
