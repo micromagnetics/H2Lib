@@ -23,7 +23,7 @@ endif (BLAS_FOUND AND LAPACK_FOUND)
 
 # Compiler flags
 set(CMAKE_C_COMPILER gcc)
-set(CMAKE_C_FLAGS "-O3 -Wall -march=ivybridge -funroll-loops -funswitch-loops ${CMAKE_C_FLAGS}")
+set(CMAKE_C_FLAGS "-O3 -Wall -funroll-loops -funswitch-loops ${CMAKE_C_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "-g -Wall ${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -Wall ${CMAKE_C_FLAGS_RELEASE}")
 
